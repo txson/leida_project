@@ -96,8 +96,6 @@ int uart_process_data(void)
 				if(out_data[data_len + 6 ] == 0x16)	//判断结束符
 				{
 					
-//					memcpy(&data_len,&out_data[2],2);
-//					//crc_val = jysf((&out_data[3]),out_data[2]);
 //					//if(out_data[3+out_data[2]] == ((uint8_t *)&crc_val)[1] || out_data[3+out_data[2]] == ((uint8_t *)&crc_val)[0])
 					memset(test_buf,0,data_len);
 					memcpy(test_buf,&out_data[4],data_len );				/*实际数据由向右偏移2位计算  第一个数据用作记录坐标原点*/
