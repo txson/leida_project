@@ -627,6 +627,7 @@ void show_boxin_page(char* val_data,int len)
 {
 	uchar show_led_val[6] = {0};	/*用于记录每个横坐标显示的数据*/
 	volatile uint8_t show_x = 0;	/*用于遍历横坐标，并将每一个横坐标的数值显示*/
+	uint8_t x_start = 6;			/*x轴开始的坐标*/
 	volatile int show_cy_val = 0;	/*用于记录当前坐标需要显示的y轴点位  val_data[(current x)] y*/
 	volatile int show_py_val = 0;	/*用于记录前一个x轴坐标的数据val_data[(current x) -1]*/
 	volatile int tmp_y_val = 0;		/*临时变量 show_py_val 逼近 show_cy_val 画线*/
@@ -654,18 +655,18 @@ void show_boxin_page(char* val_data,int len)
 	cnt = HAL_GetTick();
 	
 	/*	1.竖坐标数值显示			*/
-	lcd_disp_blink(3,6,Ordinate,32,1);
-	lcd_disp_blink(3,126,Ordinate,32,1);
+	lcd_disp_blink(3,x_start,Ordinate,32,1);
+	lcd_disp_blink(3,120 + x_start,Ordinate,32,1);
 
 	//lcd_disp_blink(3,126,daosanjiao_hei,8,7);
 	
 	/*	2.横坐标数值显示			*/
-	disp_blink_8x120(7,6,Abscissa_under);
-	disp_blink_8x120(2,6,Abscissa);
+	disp_blink_8x120(7,x_start,Abscissa_under);
+	disp_blink_8x120(2,x_start,Abscissa);
 	/*	3.显示↓						*/
 
 	/*	4.显示数值					*/
-	for(show_x = 0;show_x <= 119 ; show_x++)
+	for(show_x = 1;show_x <= 119 ; show_x++)
 	{
 		if(show_x == 1)
 		{
@@ -715,7 +716,7 @@ void show_boxin_page(char* val_data,int len)
 		}
 		show_led_val[0] |= 0x01;
 		show_led_val[5] |= 0x80;
-		point(2 ,6 + show_x,show_led_val);
+		point(2 ,x_start + show_x,show_led_val);
 		
 	}
 	//lcd_disp_blink(max_data/8,max_data_x,daosanjiao_hei,8,7);
