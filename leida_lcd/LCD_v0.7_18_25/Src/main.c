@@ -148,7 +148,7 @@ short tmp_val = 240;
 uint32_t rcc_freq = 0;
 
 // AD转换结果值
-extern uint16_t ADC_ConvertedValue;
+uint16_t ADC_ConvertedValue;
 
 extern char current_sr_val[128];
 extern int current_len;

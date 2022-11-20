@@ -506,13 +506,12 @@ void main_menu_func(uint8_t key_value)
 		}
 		case BACK_KEY:
 		{
-			//MenuManager.cur_menu->selected = 0;		//这里有两个数据界面
+			MenuManager.cur_menu->selected = 0;		//这里有两个数据界面
 			break;
 		}
 		default://按键A（确认按键）
 		{
 			cnt = HAL_GetTick();
-			//MenuManager.cur_menu->func();	/*默认选择*/
 			if(MenuManager.menu_status == 1)	/*第一次切换进来进行初始化*/
 			{
 				main_page_init();
@@ -522,28 +521,16 @@ void main_menu_func(uint8_t key_value)
 			else if (!((cnt - cnt_start) %5000))		/*1s刷新一次温度*/
 			{
 					main_page_init();
-
-			////			/*更新传感器的值*/
-			////			update_sensor_val(current_sr_val,current_len);
-			////			
-			////			/*更新进度显示*/
-			////			update_sensor_progress(current_sr_val,current_len);
 			}
 			else if (!(cnt%1000))		/*1s刷新一次温度*/
 			{
-				//HAL_ADC_Start_DMA(&hadc1,(uint32_t *)&ADC_ConvertedValue,sizeof(ADC_ConvertedValue));  
-				/*更新温度显示*/
-				Current_Temperature = (0x6EE - ((uint32_t)  hadc1.Instance->DR)) / 0x05 + 25;
-				update_sensor_temp(Current_Temperature);
+				
+				update_sensor_temp();
 			}
 			else
 			{
 				start_cnt = HAL_GetTick();
 			}
-			/*串口进程*/
-//			uart_process_data();
-			
-			
 			break;
 		}
 	}
@@ -639,13 +626,8 @@ void show_boxin_page(char* val_data,int len)
 
 
 	/*表头显示*/
-    memset(boxin_dm, 0, sizeof(boxin_dm));
-    sprintf(boxin_dm, "%2.2f", g_new_dis);
 	display_string_5x8(1,2,"d(m):");
 	display_string_5x8(1,30,boxin_dm);
-    
-    memset(boxin_Adb, 0, sizeof(boxin_Adb));
-    sprintf(boxin_Adb, "%d", g_max_db);
 	display_string_5x8(1,60,"A(dB):");
 	display_string_5x8(1,96,boxin_Adb);
 
@@ -885,7 +867,7 @@ uint8_t time_out_cnt = 0;
 void main_page_init(void)
 {
 	clear_screen(); 
-	update_sensor_temp(Current_Temperature);
+	update_sensor_temp();
 	
 	/*温度计图形显示*/
 	disp_blink_35x24(6,0,thermometer);
@@ -905,15 +887,7 @@ void main_page_init(void)
 	else
 	{
 		display_GB2312_string(7,58,"Sensor OK",0,0);
-	}
-
-	/*显示三角形标志*/
-	clear_16x8(1,64);
-	disp_blink_16x8(1,70,triangle_sign);
-
-	/*显示百分号*/
-	disp_blink_16x8(1,120,baifenhao);
-	
+	}	
 	/*增加一步高低位调整的运算*/
 	
 	update_sensor_val(current_sr_val,current_len);
@@ -982,56 +956,6 @@ float charTofloat( char *str) {
 	return i;
 }
 
-/*浮点数和整数转字符串*/
-void FToStr1(float fl , char *str, uint8_t d)  // fl:浮点数    d:小数位数
-{
-    int     integer = 0;     //整数部分
-    float   decimal  = 0;    //小数部分
-    int     temp;
-	uint16_t star_cnt = 0,cur_cnt = 0;
-    uint8_t i, n;
-    //整数部分
-    integer = (int)(fl);
-    temp = integer;
-    n = 0;
-	star_cnt = HAL_GetTick();
-    do
-    {
-        n++;
-        temp = (int)(temp / 10);  //计算有几位整数位 n
-		cur_cnt = HAL_GetTick();
-		if((cur_cnt - star_cnt) > 500 )   /*超时退出*/
-		{
-			return;
-		}
-    }
-    while(temp != 0);
- 
-    temp = integer;
-    for( i = 0; i < n ; i++)
-    {
-        *(str + n - 1 - i) = (uint8_t)(temp % 10) + '0'; //此处跳出
-        temp = (int)(temp / 10);
-    }
-    if( d == 0 )
-    {
-        *(str + i) = '\0';
-    }
-    else
-    {
-        *(str + i) = '.';
-    }
-    //小数部分
-    decimal = fl - integer;
-    for(i = n + 1; i < d + n + 1 ; i++)
-    {
-        decimal = decimal * 10;
-        *(str + i) = (uint8_t)(decimal) + '0';
-        decimal = decimal - (uint8_t)(decimal);
-    }
-    *(str + i) = '\0';
-}
-
 /*显示传感器的值*/
 void update_sensor_val(char* buf,int len)
 {
@@ -1066,105 +990,89 @@ void update_sensor_val(char* buf,int len)
 		 len	  : 输入百分比的值的数据长度
 */
 extern F_VAL HighlowAdjetMenu_Val[2];
-void update_sensor_progress(char* out_data,int len)
+uint8_t baifenbi_x = 80;
+void update_sensor_progress(char* data,int len)
 {
 	volatile uint8_t tmp_i = 0;
 	float sensor_val = 0;
 	float tmp_val = 0.0;
 	uchar sensor_per_val = 0;
-	char baifenbi[4] = {0};
-		//sensor_val =  atof(out_data);
+	char baifenbi[6] = {0};
 	
 	/*计算全量*/
 	amplitude = HighlowAdjetMenu_Val[0].float_val - HighlowAdjetMenu_Val[1].float_val;
-	if(atof(out_data) < HighlowAdjetMenu_Val[1].float_val)
+	if(amplitude > 0 )
 	{
-		sensor_val = 0;
-	}
-	else if(atof(out_data) > HighlowAdjetMenu_Val[0].float_val)
-	{
-		sensor_val = amplitude;
-	}
-	else
-	{
-		sensor_val = atof(out_data);// - HighlowAdjetMenu_Val[1].float_val;/*低位调整*/
-	}
-	tmp_val = (sensor_val * 100 / amplitude);
-	
-	//sscanf(out_data, "%.3lf", sensor_val);
-	sensor_per_val = (sensor_val * 100 / amplitude) ;
-	clear_jindutiao(1,1);
-
-	/*进度条显示*/
-	progress_bar_show(1, 1,Progress_box,sensor_per_val);
-	
-
-	 //snprintf(baifenbi,11,"%.2f",sensor_per_val); 
-	FToStr1((sensor_val* 100 / amplitude) ,baifenbi,4);
-	
-	
-	for(tmp_i = 0 ; tmp_i < 4 ; tmp_i++)
-	{
-
-		clear_16x8(1,80 + tmp_i * 8);
-		
-		if(baifenbi[tmp_i] == '.')
+		if(atof(data) < HighlowAdjetMenu_Val[1].float_val)			/*如果小于高位调整*/
 		{
-			if(tmp_i == 3)
+			sensor_val = 0;
+		}
+		else if(atof(data) > HighlowAdjetMenu_Val[0].float_val)	/*如果大于低位调整,传感器值为低位调整的值*/
+		{
+			sensor_val = amplitude;
+		}
+		else
+		{
+			sensor_val = atof(data);//传感器值为传入值
+		}
+		tmp_val = ((sensor_val * 100) / (amplitude / 0.9f));
+
+		sensor_per_val = tmp_val;		
+		clear_jindutiao(1,1);
+
+		/*进度条显示*/
+		progress_bar_show(1, 1,Progress_box,sensor_per_val);
+		memset(baifenbi,0,6);
+		snprintf(baifenbi,6,"%.3f",tmp_val); 
+		
+		/*显示三角形标志*/
+		clear_16x8(1,64);
+		disp_blink_16x8(1,baifenbi_x - 10,triangle_sign);
+		
+		for(tmp_i = 0 ; tmp_i < strlen(baifenbi) ; tmp_i++)
+		{
+
+			clear_16x8(1,baifenbi_x + tmp_i * 8);
+			
+			if(baifenbi[tmp_i] == '.')
 			{
-				continue;
+				/*显示小数点*/
+				disp_blink_16x8(1,baifenbi_x + tmp_i * 8,clear);
+				disp_blink_16x8(1,baifenbi_x+ tmp_i * 8,disp_cursor_16x8[10]);
 			}
-			/*显示传感器数值*/
-			disp_blink_16x8(1,80 + tmp_i * 8,clear);
-			disp_blink_16x8(1,80+ tmp_i * 8,disp_cursor_16x8[10]);
+			else 
+			{
+				/*显示数字*/
+				disp_blink_16x8(1,baifenbi_x + tmp_i * 8,clear);
+				disp_blink_16x8(1,baifenbi_x + tmp_i * 8,disp_cursor_16x8[baifenbi[tmp_i] - '0']);
+			}
+			
 		}
-		else 
-		{
-			/*显示传感器数值*/
-			disp_blink_16x8(1,80 + tmp_i * 8,clear);
-			disp_blink_16x8(1,80+ tmp_i * 8,disp_cursor_16x8[baifenbi[tmp_i] - '0']);
-		}
-		
+		disp_blink_16x8(1,baifenbi_x + (tmp_i * 8 ),baifenhao);	/*显示百分号*/
 	}
-	disp_blink_16x8(1,88+ (tmp_i * 8 ),baifenhao);
 }
+
+
+
 
 extern ADC_HandleTypeDef hadc1;
-/* 私有变量 ------------------------------------------------------------------*/
-/* 用于保存转换计算后的电压值 */	 
-__IO uint16_t Current_Temperature; 
-
-// AD转换结果值
-uint16_t ADC_ConvertedValue;
-
-
-void update_sensor_temp(uint16_t Current_Temperature)
+static __IO uint16_t Current_Temperature; 
+void update_sensor_temp(void)
 {
-	
-	char wendu[3] = {0};
-	FToStr1(Current_Temperature,wendu,2);
-	clear_16x8(7,35);
-	disp_blink_16x8(7,35,disp_cursor_16x8[wendu[0] - '0']);
-	clear_16x8(7,43);
-	disp_blink_16x8(7,43,disp_cursor_16x8[wendu[1] - '0']);
+	char temp[3] = {0};
+	Current_Temperature = (0x6EE - ((uint32_t)  hadc1.Instance->DR)) / 0x05 + 25;  		/*从寄存器读取温度*/
+	snprintf(temp,6,"%d",Current_Temperature); 											/*将温度值转化为字符串*/
+	/*显示温度*/
+	clear_16x8(7,34);
+	disp_blink_16x8(7,35,disp_cursor_16x8[temp[0] - '0']);
+	clear_16x8(7,41);
+	disp_blink_16x8(7,43,disp_cursor_16x8[temp[1] - '0']);
 }
 
-void show_main_page(char* out_data,int len)
-{
-//	float tmp_val = 0.0;
-//	char tmp_buf[128] = {0};
-//	memcpy(tmp_buf,out_data,124);
-//	current_len = len;	
-//	if(atof(tmp_buf) > HighlowAdjetMenu_Val[1].float_val)
-//	{
-//		tmp_val = (atof(tmp_buf) - HighlowAdjetMenu_Val[1].float_val) + 0.000001/*保持小数点后6位的精度*/;		//实际数据等于传感器数据减去低位
-//	}
-//	FToStr1(tmp_val,current_sr_val,124);
-//	/*更新传感器的值*/
-//	update_sensor_val(current_sr_val,current_len);		/*显示数值.*/
-    
-    	/*更新传感器的值*/
-	update_sensor_val(out_data, len);		/*显示数值.*/
+void show_main_page(char* data,int len)
+{    
+  /*更新传感器的值*/
+	update_sensor_val(data, len);		/*显示数值.*/
 	
 	/*更新进度显示*/
 	update_sensor_progress(current_sr_val,current_len);

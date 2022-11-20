@@ -15,27 +15,27 @@
 
 extern struct menu ListMenu;
 
-/*Ö÷½çÃæ³õÊ¼»¯*/
+/*ä¸»ç•Œé¢åˆå§‹åŒ–*/
 void MainMeunuInit(void);
 
 void ListMenuFunc(uint8_t key_value);
 
-/*Ö÷½çÃæ³õÊ¼»¯*/
+/*ä¸»ç•Œé¢åˆå§‹åŒ–*/
 void main_page_init(void);
 
-/*Ö÷½çÃæÄÚÈİÏÔÊ¾*/
+/*ä¸»ç•Œé¢å†…å®¹æ˜¾ç¤º*/
 void show_main_page(char* out_data,int len);
 
-/*¸üĞÂÎÂ¶ÈÏÔÊ¾*/
-void update_sensor_temp(uint16_t Current_Temperature);
+/*æ›´æ–°æ¸©åº¦æ˜¾ç¤º*/
+void update_sensor_temp(void);
 
-/*¸üĞÂ´«¸ĞÆ÷ÊıÖµÏÔÊ¾*/
+/*æ›´æ–°ä¼ æ„Ÿå™¨æ•°å€¼æ˜¾ç¤º*/
 void update_sensor_val(char* out_data,int len);
 
-/*¸üĞÂ½ø¶ÈÌõºÍ°Ù·Ö±ÈÏÔÊ¾*/
+/*æ›´æ–°è¿›åº¦æ¡å’Œç™¾åˆ†æ¯”æ˜¾ç¤º*/
 void update_sensor_progress(char* out_data,int len);
 
-/*ÏÔÊ¾²¨ĞÎ½çÃæ*/
+/*æ˜¾ç¤ºæ³¢å½¢ç•Œé¢*/
 void show_boxin_page(char* out_data,int len);
 #ifdef __cplusplus
 }
