@@ -639,8 +639,13 @@ void show_boxin_page(char* val_data,int len)
 
 
 	/*±ÌÕ∑œ‘ æ*/
+    memset(boxin_dm, 0, sizeof(boxin_dm));
+    sprintf(boxin_dm, "%2.2f", g_new_dis);
 	display_string_5x8(1,2,"d(m):");
 	display_string_5x8(1,30,boxin_dm);
+    
+    memset(boxin_Adb, 0, sizeof(boxin_Adb));
+    sprintf(boxin_Adb, "%d", g_max_db);
 	display_string_5x8(1,60,"A(dB):");
 	display_string_5x8(1,96,boxin_Adb);
 
