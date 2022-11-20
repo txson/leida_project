@@ -463,7 +463,7 @@ void disp_blink_8x120(uchar page,uchar column,uchar *dp)
 		for(j=0;j<1;j++)
 		{
 			lcd_address(page+j,column);
-			for (i=0;i<120;i++)
+			for (i=0;i<121;i++)
 			{	
 
 				transfer_data(*data_temp);		/*写数据到LCD,每写完一个8位的数据后列地址自动加1*/
@@ -625,40 +625,32 @@ static uchar daosanjiao_hei[7] = {0x0F,0x1F,0x3F,0x7F,0x3F,0x1F,0x0F};
 
 void show_boxin_page(char* val_data,int len)
 {
-	uchar show_led_val[6] = {0};	/*用于记录每个横坐标显示的数据*/
 	volatile uint8_t show_x = 0;	/*用于遍历横坐标，并将每一个横坐标的数值显示*/
 	uint8_t x_start = 6;			/*x轴开始的坐标*/
+	uchar show_led_val[6] = {0};	/*用于记录每个横坐标显示的数据*/
+
+	short  previous_data = 0;		/*之前的数据*/
+	short  current_data = 0;		/*当前的数据*/
+
 	volatile int show_cy_val = 0;	/*用于记录当前坐标需要显示的y轴点位  val_data[(current x)] y*/
 	volatile int show_py_val = 0;	/*用于记录前一个x轴坐标的数据val_data[(current x) -1]*/
 	volatile int tmp_y_val = 0;		/*临时变量 show_py_val 逼近 show_cy_val 画线*/
-//	int max_data = 0;				/*记录最大值*/
-//	int max_data_x = 0;				/*记录最大值的坐标*/
-	short  previous_data = 0;		/*之前的数据*/
-	short  current_data = 0;		/*当前的数据*/
-	
-	display_string_5x8(1,8,"85");
- 	
-	
-	
-	lcd_disp_blink(1,42,daosanjiao_bai,8,7);
-	display_string_5x8(1,50,"3.641");
-	
-	lcd_disp_blink(1,82,jiantou,8,7);
-	display_string_5x8(1,90,"3.641");
-	
-	
-	display_string_5x8(8,16,"10dB/0");
-	display_string_5x8(8,60,"85");
-	display_string_5x8(8,80,"11.00");
-	display_string_5x8(8,120,"m");
-	
-	cnt = HAL_GetTick();
+
+
+
+	/*表头显示*/
+	display_string_5x8(1,2,"d(m):");
+	display_string_5x8(1,30,boxin_dm);
+	display_string_5x8(1,60,"A(dB):");
+	display_string_5x8(1,96,boxin_Adb);
+
+	/*表尾显示*/
+	display_string_5x8(8,1,"0");
+	display_string_5x8(8,112,"20");
 	
 	/*	1.竖坐标数值显示			*/
 	lcd_disp_blink(3,x_start,Ordinate,32,1);
 	lcd_disp_blink(3,120 + x_start,Ordinate,32,1);
-
-	//lcd_disp_blink(3,126,daosanjiao_hei,8,7);
 	
 	/*	2.横坐标数值显示			*/
 	disp_blink_8x120(7,x_start,Abscissa_under);
@@ -666,60 +658,57 @@ void show_boxin_page(char* val_data,int len)
 	/*	3.显示↓						*/
 
 	/*	4.显示数值					*/
-	for(show_x = 1;show_x <= 119 ; show_x++)
+	if(val_data != NULL)
 	{
-		if(show_x == 1)
+		for(show_x = 1;show_x <= 119 ; show_x++)
 		{
-			memset(show_led_val,0x01,6);
-		}
-		else
-		{
-			memset(show_led_val,0x00,6);
-		}
-		if(show_x % 30 == 0)
-		{
-			memset(show_led_val,0xaa,6);
-		}
-		memcpy((void*)&previous_data,(void*)&val_data[(show_x - 1) * 2],2);		/*上一次的数据*/
-		show_py_val = Y_POINT_MAX - (previous_data * Y_POINT_MAX / (g_max_db / 0.9f)) ;
-		
-		memcpy((void*)&current_data,(void*)&val_data[(show_x) * 2],2);			/*这一次的数据*/
-		show_cy_val = Y_POINT_MAX - (current_data * Y_POINT_MAX / (g_max_db / 0.9f)) ;//  -  ( (tmp_i) * Y_POINT_MAX / (g_max_db / 0.9f) ) ;
-		
-//		if(tmp_j > max_data)
-//		{
-//			max_data = tmp_j;
-//			max_data_x = tmp_i;
-//		}
-		tmp_y_val = show_py_val;		/*记录前一个x轴的数据*/
-		while(1){
-
-			for(volatile uint8_t page = 0 ; page < 6 ; page++)		/*用于记录y轴上需要画的点*/
+			if(show_x == 1)
 			{
-				if(tmp_y_val / 8 == page)
+				memset(show_led_val,0x01,6);
+			}
+			else
+			{
+				memset(show_led_val,0x00,6);
+			}
+			if(show_x % 30 == 0 )
+			{
+					memset(show_led_val,0xaa,6);
+			}
+			memcpy((void*)&previous_data,(void*)&val_data[(show_x - 1) * 2],2);		/*上一次的数据*/
+			show_py_val = Y_POINT_MAX - (previous_data * Y_POINT_MAX / (g_max_db / 0.9f)) ;
+			
+			memcpy((void*)&current_data,(void*)&val_data[(show_x) * 2],2);			/*这一次的数据*/
+			show_cy_val = Y_POINT_MAX - (current_data * Y_POINT_MAX / (g_max_db / 0.9f)) ;//  -  ( (tmp_i) * Y_POINT_MAX / (g_max_db / 0.9f) ) ;
+			
+			tmp_y_val = show_py_val;		/*记录前一个x轴的数据*/
+			while(1){
+
+				for(volatile uint8_t page = 0 ; page < 6 ; page++)		/*用于记录y轴上需要画的点*/
 				{
-					show_led_val[page] |= 1 << (tmp_y_val % 8);
+					if(tmp_y_val / 8 == page)
+					{
+						show_led_val[page] |= 1 << (tmp_y_val % 8);
+					}
+				}
+				if(tmp_y_val == show_cy_val)
+				{
+					break;
+				}
+				else if(tmp_y_val < show_cy_val )		/*比当前数据小  正方向逼近*/
+				{
+					tmp_y_val++;
+				}
+				else									/*比当前数据大  反方向逼近*/
+				{
+					tmp_y_val--;
 				}
 			}
-			if(tmp_y_val == show_cy_val)
-			{
-				break;
-			}
-			else if(tmp_y_val < show_cy_val )		/*比当前数据小  正方向逼近*/
-			{
-				tmp_y_val++;
-			}
-			else									/*比当前数据大  反方向逼近*/
-			{
-				tmp_y_val--;
-			}
+			show_led_val[0] |= 0x01;
+			show_led_val[5] |= 0x80;
+			point(2 ,x_start + show_x,show_led_val);
+			
 		}
-		show_led_val[0] |= 0x01;
-		show_led_val[5] |= 0x80;
-		point(2 ,x_start + show_x,show_led_val);
-		
 	}
-	//lcd_disp_blink(max_data/8,max_data_x,daosanjiao_hei,8,7);
 }
 
 /*波形显示函数*/
