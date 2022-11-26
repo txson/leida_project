@@ -95,7 +95,7 @@ int uart_process_data(void)
                         g_new_dis = dis;
                         sprintf(dis_data, "%2.3f", dis);
                         
-						if(!strncmp(MenuManager.cur_menu->menu_name,"������\0",sizeof("������\0")))
+						if(!strncmp(MenuManager.cur_menu->menu_name,"主界面\0",sizeof("主界面\0")))
 						{
                             show_main_page(dis_data , strlen(dis_data));
                             cnt_start = HAL_GetTick();
@@ -126,7 +126,7 @@ int uart_process_data(void)
                             
                         i += 2;
                     }
-					if(!strncmp(MenuManager.cur_menu->menu_name,"���ν���\0",sizeof("���ν���\0")))
+					if(!strncmp(MenuManager.cur_menu->menu_name,"列表界面\0",sizeof("列表界面\0")))
 					{
 						show_boxin_page((char*)test_buf , data_len);
 					}

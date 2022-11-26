@@ -23,6 +23,12 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "key.h"
+#include "lcd12864.h"
+#include "stdio.h"
+#include "string.h"
+#include "stm32f1xx_hal_uart.h"
+#include "view_mgr.h"
+#include "key.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -104,6 +110,9 @@ int main(void)
 //  HAL_ADCEx_Calibration_Start(&hadc1);		/*ѭ��ת��*/
 //  HAL_ADC_Start_DMA(&hadc1,(uint32_t *)&ADC_ConvertedValue,sizeof(ADC_ConvertedValue));  
   MX_USART1_UART_Init();
+  
+	__HAL_UART_ENABLE_IT(&huart1, UART_IT_IDLE);
+  
 	HAL_UART_Transmit(&huart1,"hello word\r\n",12,1000);	
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
@@ -266,9 +275,8 @@ static void MX_USART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
-	__HAL_UART_ENABLE_IT(&huart1, UART_IT_IDLE);
-  /* USER CODE END USART1_Init 2 */
 
+  /* USER CODE END USART1_Init 2 */
 }
 
 /**

@@ -1,5 +1,5 @@
 #include "view_mgr.h"
-
+#include "uart.h"
 //#include "malloc.h"
 extern UART_HandleTypeDef huart1;
 extern uint8_t receive_buff[255];
@@ -30,13 +30,13 @@ void displaymenu()
 			if(i+MenuManager.cur_menu->range_from == MenuManager.cur_menu->selected )
 			{
 				display_GB2312_string(i*2+1,16,"*",0,0);
-				display_GB2312_string(i*2+1,16*2,MenuManager.\
-					cur_menu->subMenus[i+MenuManager.cur_menu->range_from]->menu_name,1,0);
+				display_GB2312_string(i*2+1,16*2,(uchar*)(MenuManager.\
+					cur_menu->subMenus[i+MenuManager.cur_menu->range_from]->menu_name),1,0);
 			}
 			else
 			{
-				display_GB2312_string(i*2+1,16*2,MenuManager.\
-					cur_menu->subMenus[i+MenuManager.cur_menu->range_from]->menu_name,0,0);
+				display_GB2312_string(i*2+1,16*2,(uchar *)(MenuManager.\
+					cur_menu->subMenus[i+MenuManager.cur_menu->range_from]->menu_name),0,0);
 			}
 		}
 	}

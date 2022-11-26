@@ -94,6 +94,8 @@ void data_display(unsigned char page,unsigned char column,uint8_t *data_char,uin
 //void BasicSetFunc(uint8_t key_value);
 //void MainMenuFunc(uint8_t key_value);
 //ÏÔÊ¾µ¥¶À×Ö·û
+
+void menu_looper(void);
 //void data_display(uchar page,uchar column,uint8_t *text,uint8_t reverse,uint8_t select);
 #ifdef __cplusplus
 }
