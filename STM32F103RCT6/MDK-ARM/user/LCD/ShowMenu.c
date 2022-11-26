@@ -1,0 +1,673 @@
+#include "ShowMenu.h"
+#include <string.h>
+
+extern Menu ShowMenu;
+
+
+OPT Language_Val = {"语言",0,2};
+Menu Language= { 						
+	"语言\0",					
+	0,3,3,0,1,						//默认显示0-3项，总共8项，当前选择0项，
+}; 
+
+
+F_VAL Curve_RangeMenu_Val[2] = {{"曲线范围[上限](m)","000.00",0.00},{"曲线范围[下限]","000.00",0.00}};
+Menu Curve_RangeMenu = { 	//高低位调整界面
+	"曲线范围\0",					
+	0,3,4,0,1,						//默认显示0-3项，总共8项，当前选择0项，
+}; 
+
+OPT CompanyArea_Val = {"单位",0,2};
+Menu CompanyArea= { 						
+	"单位\0",					
+	0,3,3,0,1,						//默认显示0-3项，总共8项，当前选择0项，
+}; 
+
+OPT Show_Contents_Val = {"单位",0,2};
+Menu Show_Contents= { 						
+	"显示内容\0",					
+	0,3,3,0,1,						//默认显示0-3项，总共8项，当前选择0项，
+}; 
+
+F_VAL Amplitude_Range_Val[2] = {{"最小(dB)","000",0.00},{"最大(dB)","000",0.00}};
+Menu Amplitude_Range= { 						
+	"幅度范围\0",					
+	0,3,3,0,0,						//默认显示0-3项，总共8项，当前选择0项，
+}; 
+
+
+/*显示界面*/
+void ShowFunc(uint8_t key_value)
+{
+	uint8_t goto_flag = 0;
+		switch(key_value)
+		{
+			case OK_KEY://按键A（确认按键）
+			{
+				//clear_screen(); 
+				if( MenuManager.cur_menu->subMenus[MenuManager.cur_menu->selected]->func != NULL)
+				{
+					MenuManager.cur_menu = MenuManager.cur_menu->subMenus[MenuManager.cur_menu->selected];
+				}
+				MenuManager.menu_status = 1;
+				goto_flag = 1;
+				//displaymenu();
+				break;
+			}
+			case UP_KEY://按键B（上一行菜单）
+			{
+				if(MenuManager.cur_menu->selected == 0)
+				{
+					/*当前选项已经为第一项 返回不进行处理*/
+					break;
+				}
+
+				else
+				{
+					//clear_screen(); 
+					if(MenuManager.cur_menu->selected != 0)
+					{
+						/*列表选项上翻*/
+						MenuManager.cur_menu->selected--;
+
+					}
+					if(MenuManager.cur_menu->selected < MenuManager.cur_menu->range_from)
+					{
+						/*已经翻到当前页面第一项 则更新页面显示的选项*/
+						MenuManager.cur_menu->range_from = MenuManager.cur_menu->selected;
+						MenuManager.cur_menu->range_to = MenuManager.cur_menu->range_from+3;
+					}
+					//displaymenu();
+				}
+				
+				break;
+			}
+			case DOWN_KEY://按键C（下一行菜单 ）
+			{
+				if(MenuManager.cur_menu->selected == MenuManager.cur_menu->itemCount-1)
+				{
+					break;
+				}
+				//clear_screen(); 
+				if(MenuManager.cur_menu->selected <= MenuManager.cur_menu->itemCount)
+				{
+					MenuManager.cur_menu->selected++;
+
+				}
+				if(MenuManager.cur_menu->selected > MenuManager.cur_menu->range_to)
+				{
+					MenuManager.cur_menu->range_to = MenuManager.cur_menu->selected;
+					MenuManager.cur_menu->range_from = MenuManager.cur_menu->range_to-3;
+				}
+				//displaymenu();
+				break;
+			}	
+			case BACK_KEY://按键D（返回）
+			{	
+				if(MenuManager.cur_menu->parent != NULL)
+				{
+					MenuManager.cur_menu = MenuManager.cur_menu->parent;
+				}
+				MenuManager.menu_status = 1;
+				//clear_screen();
+				//displaymenu();
+				
+				break;
+			}
+			default:   //界面刷新
+			{
+
+				break;
+			}
+		}
+		if(goto_flag == 1)
+		{
+			goto_flag = 0;
+			return;
+		}
+		
+		else if((key_value != 0) || (MenuManager.menu_status == 1))
+		{
+			clear_screen();
+			displaymenu();
+			MenuManager.menu_status = 0;
+		}
+		return;
+}
+extern uint8_t set_ok_flag;
+
+/*语言选择*/
+void LanguageFunc(uint8_t key_value)
+{
+	uint8_t goto_flag = 0;
+	switch(key_value)
+	{
+		case OK_KEY://按键A（确认按键）
+		{
+			/*OK按键功能*/
+			if(set_ok_flag == 0)
+			{
+				set_ok_flag = 1;			//选中状态
+			}
+			else
+			{
+				set_ok_flag = 0;			//未选中状态
+			}
+			break;
+		}
+		case DOWN_KEY://按键B（上一行菜单）
+		{
+			if(set_ok_flag == 0)		/*未选中*/
+			{
+			}
+			else if (set_ok_flag == 1)	/*选中*/
+			{
+			}
+			if(MenuManager.cur_menu->selected >= 1)
+			{
+				MenuManager.cur_menu->selected = 0;
+			}
+			else
+			{
+				MenuManager.cur_menu->selected++;
+			}
+			break;
+		}
+		case UP_KEY://按键C（下一行菜单 ）
+		{
+			/*上翻按键功能*/
+			
+			break;
+		}	
+		case BACK_KEY://按键D（返回）
+		{	
+			/*返回按键功能*/
+			MenuManager.cur_menu = MenuManager.cur_menu->parent;
+			MenuManager.menu_status = 1;
+			goto_flag = 1;
+			break;
+		}
+		default:   //界面刷新
+		{
+			break;
+		}
+	}
+	if(goto_flag == 1)
+	{
+		/*直接退出*/
+		goto_flag = 0;
+		return;
+	}
+	else if((key_value != 0) || (MenuManager.menu_status == 1))
+	{
+		/*页面显示*/
+		uchar tmp_ch = '*';
+		volatile uint8_t tmp_i = 0;
+		clear_screen();
+		display_GB2312_string(1,8,(unsigned char *)(((F_VAL *)(MenuManager.cur_menu->item_val))[0].val_name),0,0); 
+		display_Signle_GB2312_string(3+(MenuManager.cur_menu->selected * 2),16+(8 * tmp_i),&tmp_ch,0,0);
+		display_GB2312_string(3,32,(unsigned char *)"中文",0,0); 
+		display_GB2312_string(5,32,(unsigned char *)"English",0,0); 
+		MenuManager.menu_status = 0;
+	}
+}
+
+void Curve_RangeMenuFunc(uint8_t key_value)
+{
+	uint8_t goto_flag = 0;
+		switch(key_value)
+		{
+			case OK_KEY://按键A（确认按键）
+			{
+				//clear_screen(); 
+//				if( MenuManager.cur_menu->subMenus[MenuManager.cur_menu->selected] != NULL)
+//				{
+//					MenuManager.cur_menu = MenuManager.cur_menu->subMenus[MenuManager.cur_menu->selected];
+//				}
+//				if(MenuManager.DataSelectionStatus == 0)
+//				{
+//					MenuManager.DataSelectionStatus = 1;
+//				}
+//				else if (MenuManager.DataSelectionStatus == 1)
+//				{
+//					sscanf((char*)HighlowAdjustmentBuf,"%.2lf",HighlowAdjustment);
+//					MenuManager.DataSelectionStatus = 0;
+//				}
+				if(set_ok_flag == 0)
+				{
+					set_ok_flag = 1;			//选中状态
+				}
+				else
+				{
+					set_ok_flag = 0;			//未选中状态
+				}
+
+				break;
+			}
+			case DOWN_KEY://按键B（上一行菜单）
+			{
+
+//				if('0'> ((F_VAL *)(MenuManager.cur_menu->item_val)) ->char_val[0]||\
+//					((F_VAL *)(MenuManager.cur_menu->item_val)) ->char_val[0] >= '9')	//判断当前数据是否合法
+//				{
+//					break;
+//				}
+				//clear_screen(); 
+				if(set_ok_flag == 0)
+				{
+					/*下一项*/
+					//if(MenuManager.cur_menu->selected >= 0 && MenuManager.cur_menu->selected < (2 * 7 -1))
+					{
+						if(MenuManager.cur_menu->selected >=  (2 * 7 -1))
+						{
+							MenuManager.cur_menu->selected = 0;
+						}
+						else
+						{
+							MenuManager.cur_menu->selected++;
+						}
+						if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7 ].char_val[MenuManager.cur_menu->selected % 7] == '.')
+							MenuManager.cur_menu->selected++;
+					}
+
+				}
+				else if (set_ok_flag == 1)
+				{
+					((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7]++;
+					if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] < '0')
+					{
+						((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] ='9';
+					}
+					else if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] > '9' )
+					{
+						 ((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] ='0';
+					}
+				}
+				
+				break;
+			}
+			case UP_KEY://按键C（下一行菜单 ）
+			{
+				/*暂时不做上翻功能*/
+				break;
+			}	
+			case BACK_KEY://按键D（返回）
+			{	
+				//clear_screen(); 
+				
+				MenuManager.cur_menu = MenuManager.cur_menu->parent;
+				MenuManager.menu_status = 1;
+				goto_flag = 1;
+				break;
+			}
+			default:   //界面刷新
+			{
+
+				break;
+			}
+		}
+		if(goto_flag == 1)
+		{
+			goto_flag = 0;
+			return;
+		}
+		else if((key_value != 0) || (MenuManager.menu_status == 1))
+		{
+			volatile uint8_t tmp_i = 0;
+			clear_screen();
+			display_GB2312_string(1,16,(unsigned char *)(((F_VAL *)(MenuManager.cur_menu->item_val))[0].val_name),0,0); 
+			for(tmp_i  ; tmp_i < 7 * 1 ; tmp_i ++)
+			{
+
+				if(MenuManager.cur_menu->selected == tmp_i)
+				{
+					display_Signle_GB2312_string(3,16+(8 * tmp_i),(unsigned char *)&((F_VAL *)(MenuManager.cur_menu->item_val))[0].char_val[tmp_i],set_ok_flag,1);
+				}
+				else
+				{
+					display_Signle_GB2312_string(3,16+(8 * tmp_i),(unsigned char *)&((F_VAL *)(MenuManager.cur_menu->item_val))[0].char_val[tmp_i],0,0);
+				}
+			}
+			
+			display_GB2312_string(5,16,(unsigned char *)(((F_VAL *)(MenuManager.cur_menu->item_val))[1].val_name),0,0); 
+			for(tmp_i  ; tmp_i < 7 * 2 ; tmp_i ++)
+			{
+				if(MenuManager.cur_menu->selected == tmp_i)
+				{
+					display_Signle_GB2312_string(7,16+(8 * (tmp_i - 7)),(unsigned char *)&((F_VAL *)(MenuManager.cur_menu->item_val))[1].char_val[tmp_i - 7],set_ok_flag,1);
+				}
+				else
+				{
+					display_Signle_GB2312_string(7,16+(8 * (tmp_i - 7)),(unsigned char *)&((F_VAL *)(MenuManager.cur_menu->item_val))[1].char_val[tmp_i - 7],0,0);
+				}
+			}
+			MenuManager.menu_status = 0;
+		}
+}
+
+
+/*单位选择*/
+void CompanyAreaFunc(uint8_t key_value)
+{
+	uint8_t goto_flag = 0;
+	switch(key_value)
+	{
+		case OK_KEY://按键A（确认按键）
+		{
+			/*OK按键功能*/
+			if(set_ok_flag == 0)
+			{
+				set_ok_flag = 1;			//选中状态
+			}
+			else
+			{
+				set_ok_flag = 0;			//未选中状态
+			}
+			break;
+		}
+		case DOWN_KEY://按键B（上一行菜单）
+		{
+			if(set_ok_flag == 0)		/*未选中*/
+			{
+			}
+			else if (set_ok_flag == 1)	/*选中*/
+			{
+			}
+			if(MenuManager.cur_menu->selected >= 1)
+			{
+				MenuManager.cur_menu->selected = 0;
+			}
+			else
+			{
+				MenuManager.cur_menu->selected++;
+			}
+			break;
+		}
+		case UP_KEY://按键C（下一行菜单 ）
+		{
+			/*上翻按键功能*/
+			
+			break;
+		}	
+		case BACK_KEY://按键D（返回）
+		{	
+			/*返回按键功能*/
+			MenuManager.cur_menu = MenuManager.cur_menu->parent;
+			MenuManager.menu_status = 1;
+			goto_flag = 1;
+			break;
+		}
+		default:   //界面刷新
+		{
+			break;
+		}
+	}
+	if(goto_flag == 1)
+	{
+		/*直接退出*/
+		goto_flag = 0;
+		return;
+	}
+	else if((key_value != 0) || (MenuManager.menu_status == 1))
+	{
+		/*页面显示*/
+		uchar tmp_ch = '*';
+		volatile uint8_t tmp_i = 0;
+		clear_screen();
+		display_GB2312_string(1,8,(unsigned char *)(((F_VAL *)(MenuManager.cur_menu->item_val))[0].val_name),0,0); 
+		display_Signle_GB2312_string(3+(MenuManager.cur_menu->selected * 2),16+(8 * tmp_i),&tmp_ch,0,0);
+		display_GB2312_string(3,32,"米(m)",0,0); 
+		display_GB2312_string(5,32,"毫米(mm)",0,0); 
+		display_GB2312_string(5,32,"英尺(tt)",0,0); 
+		MenuManager.menu_status = 0;
+	}
+}
+
+/*显示内容*/
+void Show_Contents_Func(uint8_t key_value)
+{
+	uint8_t goto_flag = 0;
+	switch(key_value)
+	{
+		case OK_KEY://按键A（确认按键）
+		{
+			/*OK按键功能*/
+			if(set_ok_flag == 0)
+			{
+				set_ok_flag = 1;			//选中状态
+			}
+			else
+			{
+				set_ok_flag = 0;			//未选中状态
+			}
+			break;
+		}
+		case DOWN_KEY://按键B（上一行菜单）
+		{
+			if(set_ok_flag == 0)		/*未选中*/
+			{
+			}
+			else if (set_ok_flag == 1)	/*选中*/
+			{
+			}
+			if(MenuManager.cur_menu->selected >= 1)
+			{
+				MenuManager.cur_menu->selected = 0;
+			}
+			else
+			{
+				MenuManager.cur_menu->selected++;
+			}
+			break;
+		}
+		case UP_KEY://按键C（下一行菜单 ）
+		{
+			/*上翻按键功能*/
+			
+			break;
+		}	
+		case BACK_KEY://按键D（返回）
+		{	
+			/*返回按键功能*/
+			MenuManager.cur_menu = MenuManager.cur_menu->parent;
+			MenuManager.menu_status = 1;
+			goto_flag = 1;
+			break;
+		}
+		default:   //界面刷新
+		{
+			break;
+		}
+	}
+	if(goto_flag == 1)
+	{
+		/*直接退出*/
+		goto_flag = 0;
+		return;
+	}
+	else if((key_value != 0) || (MenuManager.menu_status == 1))
+	{
+		/*页面显示*/
+		uchar tmp_ch = '*';
+		volatile uint8_t tmp_i = 0;
+		clear_screen();
+		display_GB2312_string(1,8,(unsigned char *)(((F_VAL *)(MenuManager.cur_menu->item_val))[0].val_name),0,0); 
+		display_Signle_GB2312_string(3+(MenuManager.cur_menu->selected * 2),16+(8 * tmp_i),&tmp_ch,0,0);
+		display_GB2312_string(3,32,(unsigned char *)"料高",0,0); 
+		display_GB2312_string(5,32,(unsigned char *)"空高",0,0); 
+		MenuManager.menu_status = 0;
+	}
+}
+
+/*幅度范围*/
+void Amplitude_Range_Func(uint8_t key_value)
+{
+	uint8_t goto_flag = 0;
+		switch(key_value)
+		{
+			case OK_KEY://按键A（确认按键）
+			{
+				//clear_screen(); 
+//				if( MenuManager.cur_menu->subMenus[MenuManager.cur_menu->selected] != NULL)
+//				{
+//					MenuManager.cur_menu = MenuManager.cur_menu->subMenus[MenuManager.cur_menu->selected];
+//				}
+//				if(MenuManager.DataSelectionStatus == 0)
+//				{
+//					MenuManager.DataSelectionStatus = 1;
+//				}
+//				else if (MenuManager.DataSelectionStatus == 1)
+//				{
+//					sscanf((char*)HighlowAdjustmentBuf,"%.2lf",HighlowAdjustment);
+//					MenuManager.DataSelectionStatus = 0;
+//				}
+				if(set_ok_flag == 0)
+				{
+					set_ok_flag = 1;			//选中状态
+				}
+				else
+				{
+					set_ok_flag = 0;			//未选中状态
+				}
+
+				break;
+			}
+			case DOWN_KEY://按键B（上一行菜单）
+			{
+
+//				if('0'> ((F_VAL *)(MenuManager.cur_menu->item_val)) ->char_val[0]||\
+//					((F_VAL *)(MenuManager.cur_menu->item_val)) ->char_val[0] >= '9')	//判断当前数据是否合法
+//				{
+//					break;
+//				}
+				//clear_screen(); 
+				if(set_ok_flag == 0)
+				{
+					/*下一项*/
+					//if(MenuManager.cur_menu->selected >= 0 && MenuManager.cur_menu->selected < (2 * 7 -1))
+					{
+						if(MenuManager.cur_menu->selected >=  (2 * 3 -1))
+						{
+							MenuManager.cur_menu->selected = 0;
+						}
+						else
+						{
+							MenuManager.cur_menu->selected++;
+						}
+						if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 3 ].char_val[MenuManager.cur_menu->selected % 3] == '.')
+							MenuManager.cur_menu->selected++;
+					}
+
+				}
+				else if (set_ok_flag == 1)
+				{
+					((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 3].char_val[MenuManager.cur_menu->selected % 3]++;
+					if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 3].char_val[MenuManager.cur_menu->selected % 3] < '0')
+					{
+						((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 3].char_val[MenuManager.cur_menu->selected % 3] ='9';
+					}
+					else if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 3].char_val[MenuManager.cur_menu->selected % 3] > '9' )
+					{
+						 ((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 3].char_val[MenuManager.cur_menu->selected % 3] ='0';
+					}
+				}
+				
+				break;
+			}
+			case UP_KEY://按键C（下一行菜单 ）
+			{
+				/*暂时不做上翻功能*/
+				break;
+			}	
+			case BACK_KEY://按键D（返回）
+			{	
+				//clear_screen(); 
+				
+				MenuManager.cur_menu = MenuManager.cur_menu->parent;
+				MenuManager.menu_status = 1;
+				goto_flag = 1;
+				break;
+			}
+			default:   //界面刷新
+			{
+
+				break;
+			}
+		}
+		if(goto_flag == 1)
+		{
+			goto_flag = 0;
+			return;
+		}
+		else if((key_value != 0) || (MenuManager.menu_status == 1))
+		{
+			volatile uint8_t tmp_i = 0;
+			clear_screen();
+			display_GB2312_string(1,16,(unsigned char *)((F_VAL *)(MenuManager.cur_menu->item_val))[0].val_name,0,0); 
+			for(tmp_i  ; tmp_i < 3 * 1 ; tmp_i ++)
+			{
+
+				if(MenuManager.cur_menu->selected == tmp_i)
+				{
+					display_Signle_GB2312_string(3,16+(8 * tmp_i),(unsigned char *)&((F_VAL *)(MenuManager.cur_menu->item_val))[0].char_val[tmp_i],set_ok_flag,1);
+				}
+				else
+				{
+					display_Signle_GB2312_string(3,16+(8 * tmp_i),(unsigned char *)&((F_VAL *)(MenuManager.cur_menu->item_val))[0].char_val[tmp_i],0,0);
+				}
+			}
+			
+			display_GB2312_string(5,16,(unsigned char *)((F_VAL *)(MenuManager.cur_menu->item_val))[1].val_name,0,0); 
+			for(tmp_i  ; tmp_i < 3 * 2 ; tmp_i ++)
+			{
+				if(MenuManager.cur_menu->selected == tmp_i)
+				{
+					display_Signle_GB2312_string(7,16+(8 * (tmp_i - 3)),(unsigned char *)&((F_VAL *)(MenuManager.cur_menu->item_val))[1].char_val[tmp_i - 3],set_ok_flag,1);
+				}
+				else
+				{
+					display_Signle_GB2312_string(7,16+(8 * (tmp_i - 3)),(unsigned char *)&((F_VAL *)(MenuManager.cur_menu->item_val))[1].char_val[tmp_i - 3],0,0);
+				}
+			}
+			MenuManager.menu_status = 0;
+		}
+}
+
+void ShowMenuInit(void)
+{
+	/*显示界面初始化*/
+	ShowMenu.subMenus[0] = &Language;
+	
+	
+	ShowMenu.subMenus[1] = &Curve_RangeMenu;
+	ShowMenu.subMenus[2] = &CompanyArea;
+	ShowMenu.subMenus[3] = &Show_Contents;
+	ShowMenu.subMenus[4] = &Amplitude_Range;
+	ShowMenu.parent = &ListMenu;			/*主界面没有上级目录*/
+	ShowMenu.func = ShowFunc;
+	
+	/*语言*/
+	Language.item_val = &Language_Val;
+	Language.func = &LanguageFunc;
+	Language.parent = &ShowMenu;
+	
+	/*曲线范围*/
+	Curve_RangeMenu.item_val = &Curve_RangeMenu_Val;
+	Curve_RangeMenu.func = &Curve_RangeMenuFunc;
+	Curve_RangeMenu.parent = &ShowMenu;
+	
+	/*单位*/
+	CompanyArea.item_val = &CompanyArea_Val;
+	CompanyArea.func = &CompanyAreaFunc;
+	CompanyArea.parent = &ShowMenu;
+	
+	/*显示内容*/
+	Show_Contents.item_val = &Show_Contents_Val;
+	Show_Contents.func = &Show_Contents_Func;
+	Show_Contents.parent = &ShowMenu;
+	
+	/*幅度范围*/
+	Amplitude_Range.item_val = &Amplitude_Range_Val;
+	Amplitude_Range.func = &Amplitude_Range_Func;
+	Amplitude_Range.parent = &ShowMenu;
+}
