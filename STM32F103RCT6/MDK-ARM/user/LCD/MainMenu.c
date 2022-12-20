@@ -18,12 +18,12 @@ uint16_t  amplitude = 120;
 
 Menu WaveMenu = { 
 	"波形界面\0",						//界面名
-	0,0,0,0,2,							//默认显示0-3项，总共4项，当前选择0项，为显示界面
+	0,0,0,0,0,							//默认显示0-3项，总共4项，当前选择0项，为显示界面
 }; 
 
 Menu MainMenu = { 
 	"主界面\0",						//界面名
-	0,0,0,0,2,						//默认显示0-3项，总共4项，当前选择0项，为显示界面
+	0,0,0,0,0,						//默认显示0-3项，总共4项，当前选择0项，为显示界面
 }; 
 
 Menu ListMenu = { 
@@ -710,7 +710,7 @@ void MainMeunuInit(void)
 	
 	
 	MenuManager.cur_menu = &MainMenu;
-	MenuManager.DataSelectionStatus = 0;
+	// MenuManager.DataSelectionStatus = 0;
 }
 
 

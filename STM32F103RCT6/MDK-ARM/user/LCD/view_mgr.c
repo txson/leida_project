@@ -18,7 +18,7 @@ void displaymenu()
 {
 	uchar HighlowAdjustmentBuf[4] = {0};
 	volatile uint16_t i = 0;
-	if(MenuManager.cur_menu->view_type == 0)		//列表界面
+	//if(MenuManager.cur_menu->view_type == 0)		//列表界面
 	{	
 		/*4次循环打印菜单*/
 		for(i = 0;i<4;i++)
@@ -39,44 +39,6 @@ void displaymenu()
 					cur_menu->subMenus[i+MenuManager.cur_menu->range_from]->menu_name),0,0);
 			}
 		}
-	}
-	else if(MenuManager.cur_menu->view_type == 1)	//浮点数界面
-	{
-//		/*4次循环打印菜单*/
-//		for(i = 0;i<4;i++)
-//		{
-////			if(MenuManager.cur_menu->subMenus[i+MenuManager.cur_menu->range_from]->menu_name[0] == '.')
-////			{
-////				MenuManager.cur_menu->selected++;
-////			}
-//			if(i == MenuManager.cur_menu->selected )
-//			{
-//				if(MenuManager.DataSelectionStatus == 0)
-//				{
-//					display_Signle_GB2312_string(3,16*(2+i),MenuManager.\
-//						cur_menu->subMenus[i+MenuManager.cur_menu->range_from]->menu_name,0,1);  //显示下划线
-//				}
-//				else if(MenuManager.DataSelectionStatus == 1)
-//				{
-//					display_Signle_GB2312_string(3,16*(2+i),MenuManager.\
-//						cur_menu->subMenus[i+MenuManager.cur_menu->range_from]->menu_name,1,1);  //反色
-//				}
-//			}
-//			else
-//			{
-//				display_Signle_GB2312_string(3,16*(2+i),MenuManager.\
-//					cur_menu->subMenus[i+MenuManager.cur_menu->range_from]->menu_name,0,0);
-//			}
-//		}
-	
-//		display_GB2312_string(1,16*(2+i),"低位调整(m)",0,0); 
-//		display_GB2312_string(3,16*(2+i),HighlowAdjustmentBuf,0,1);  //显示下划线
-//		display_GB2312_string(5,16*(2+i),"高位调整(m)",0,0); 
-//		display_GB2312_string(7,16*(2+i),HighlowAdjustmentBuf,0,1);  //显示下划线
-	}
-	else if(MenuManager.cur_menu->view_type == 2)
-	{
-		//显示界面
 	}
 }
 
@@ -109,6 +71,66 @@ void meunu_init(void)
 	MenuManager.cur_menu->selected = 1;
 }
 
+uint8_t g_yorn_opt_sel = INIT_VAL;
+int save_modification(uint8_t key_val)
+{
+	switch(key_val)
+	{
+		case UP_KEY:		/*上翻键*/
+		{
+			if(g_yorn_opt_sel != 0)
+			{
+				g_yorn_opt_sel--;
+			}
+		}
+		break;
+		case DOWN_KEY:		/*下翻键*/
+		{
+			g_yorn_opt_sel++;
+			if(g_yorn_opt_sel > MAX_SEL)
+			{
+				g_yorn_opt_sel = MAX_SEL;
+			}
+		}
+		break;
+		case BACK_KEY:		/*返回键*/
+		{
+			MenuManager.cur_menu->view_type = FUC;
+			return g_yorn_opt_sel;
+		}
+		break;
+		case OK_KEY:		/*确认键*/
+		{
+			if(g_yorn_opt_sel == SEL_YES)
+			{
+				MenuManager.menu_status = SAVE_DATA;
+			}
+			MenuManager.cur_menu->view_type = FUC;
+			g_yorn_opt_sel = INIT_VAL;
+		}
+		break;
+		default:
+		{
+			if(g_yorn_opt_sel == INIT_VAL)
+			{
+				clear_screen();
+				g_yorn_opt_sel = SEL_NO;
+			}
+			display_GB2312_string(1,8,"是否确认修改",0,0);
+			if(g_yorn_opt_sel == SEL_YES)
+			{
+				display_GB2312_string(3,32,"是",1,0);
+				display_GB2312_string(3,64,"否",0,0);
+			}
+			else if(g_yorn_opt_sel == SEL_NO)
+			{
+				display_GB2312_string(3,32,"是",0,0);
+				display_GB2312_string(3,64,"否",1,0);
+			}
+		}
+		break;
+	}
+}
 /**
  * @Date: 2022-11-23 23:16:44
  * @LastEditors: herod
@@ -121,37 +143,18 @@ void menu_looper(void)
 	while(1)
 	{
 		Key_val = KEY_Scan(0);								/*获取按键事件*/
-		Fun(MenuManager.cur_menu,Key_val);		/*运行界面函数*/
+		if(MenuManager.cur_menu->view_type == SAVE_OR_NO)
+		{
+			save_modification(Key_val);
+		}
+		else
+		{
+			Fun(MenuManager.cur_menu,Key_val);		/*运行界面函数*/
+		}
 		uart_process_data();									/*串口数据业务*/
 	}
 }
 
-
-// /**
-//  * @Date: 2022-11-23 23:16:55
-//  * @LastEditors: herod
-//  * @param {unsigned char} page
-//  * @param {unsigned char} column
-//  * @param {uint8_t} *data_char
-//  * @param {uint8_t} reverse
-//  * @param {uint8_t} select
-//  * @Description: 
-//  */
-// void data_display(unsigned char page,unsigned char column,uint8_t *data_char,uint8_t reverse,uint8_t select)
-// {
-// 	volatile uint8_t tmp_i = 0;
-// 	for(tmp_i = 0 ; tmp_i < 4 ; tmp_i++)
-// 	{
-// 		if(tmp_i == select)
-// 		{
-// 			display_Signle_GB2312_string(3,column+tmp_i*16,&data_char[tmp_i],0,1);
-// 		}
-// 		else
-// 		{
-// 			display_Signle_GB2312_string(3,column+tmp_i*16,&data_char[tmp_i],0,1);	
-// 		}
-// 	}
-// }
 
 
 

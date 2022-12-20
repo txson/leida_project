@@ -18,6 +18,19 @@
 
 #define MENUS_MAX_NUM 17
 
+enum
+{
+	FUC,			/*功能函数显示*/
+	SAVE_OR_NO			/*修改确认显示*/
+};
+
+enum
+{
+	SEL_YES,
+	SEL_NO,
+	MAX_SEL,
+	INIT_VAL = 127
+};
 
 //void (**func(uint8_t key_value))();
 /*界面结构体*/
@@ -27,7 +40,7 @@ typedef struct menu
 	uint8_t range_from,range_to; 			//当前选择的项开始及结束符号
 	uint8_t itemCount;						//项目总数
 	uint8_t selected;						//当前选择项
-	uint8_t view_type;						//当前界面界面类型  0:列表界面  1:显示
+	uint8_t view_type;						//当前界面界面类型  0:显示列表  1:修改确认显示
 	void *  item_val;								//数值指针
 	struct menu *subMenus[MENUS_MAX_NUM];	//子菜单  这里写到最大
 	struct menu *parent;					//上级菜单，若是主菜单则为null
@@ -46,12 +59,18 @@ typedef struct option_list {
 	uint8_t max_item;
 }OPT;
 
+enum
+{
+	RUN_LOOP,
+	FIRST_ENTRY,
+	SAVE_DATA
+};
 /*界面管理结构体*/
 typedef struct 
 {
 	Menu *cur_menu;//
-	uint8_t menu_status;				//1为第一次进入页面   0为页面已经在循环运行
-	uint8_t DataSelectionStatus;
+	uint8_t menu_status;				//2页面中数据需要保存 1为第一次进入页面   0为页面已经在循环运行
+	//uint8_t DataSelectionStatus;
 } MenuMgr;
 
 extern MenuMgr MenuManager;

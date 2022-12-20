@@ -40,25 +40,25 @@ extern Menu BasicSetMenu;
 F_VAL Range_Val = {"量程(m)","000.000",0.00};
 Menu Range= { 						
 	"量程\0",					
-	0,3,3,0,1,						//默认显示0-3项，总共8项，当前选择0项，
+	0,3,3,0,0,						//默认显示0-3项，总共8项，当前选择0项，
 }; 
 /*高低位调整*/
 F_VAL HighlowAdjetMenu_Val[2] = {{"低位调整(m)","000.000",30.00},{"高位调整(m)","000.000",2.00}};
 Menu HighlowAdjetMenu = { 	//高低位调整界面
 	"高低位调整\0",					
-	0,3,4,0,1,						//默认显示0-3项，总共8项，当前选择0项，
+	0,3,4,0,0,						//默认显示0-3项，总共8项，当前选择0项，
 }; 
 
 F_VAL BlindArea_Val = {"盲区(m)","00.000",0.00};
 Menu BlindArea= { 						
 	"盲区\0",					
-	0,3,3,0,1,						//默认显示0-3项，总共8项，当前选择0项，
+	0,3,3,0,0,						//默认显示0-3项，总共8项，当前选择0项，
 }; 
 
 F_VAL Distance_Val = {"距离偏执(m)","+0.000",0.00};
 Menu Distance_Paranoia= { 						
 	"距离偏置\0",					
-	0,3,3,0,1,						//默认显示0-3项，总共8项，当前选择0项，
+	0,3,3,0,0,						//默认显示0-3项，总共8项，当前选择0项，
 }; 
 
 OPT Materia_Val = {"物料性质",0,3};
@@ -82,13 +82,13 @@ Menu WaveFollowingSet = {
 F_VAL Gain_Val = {"距离偏执(m)","00",0.00};
 Menu GainSet = { 
 	"增益设置\0",
-	0,3,3,0,1,						//默认显示0-3项，总共4项，当前选择0项，	
+	0,3,3,0,0,						//默认显示0-3项，总共4项，当前选择0项，	
 }; 
 
 F_VAL WNT_Set_val[2] = {{"跟踪宽度(m)","0.00",0.00},{"保持时间(s)","0000",0.00}};
 Menu WNTSet = { 					/*宽度和时间设置界面*/
 	"宽度和时间\0",
-	0,3,3,0,1,						//默认显示0-3项，总共4项，当前选择0项，	
+	0,3,3,0,0,						//默认显示0-3项，总共4项，当前选择0项，	
 }; 
 
 
@@ -199,7 +199,8 @@ void BasicSetFunc(uint8_t key_value)
 
 
 
-
+extern UART_HandleTypeDef huart1;
+static uint8_t Ready_to_Exit_flag = 0;
 uint8_t set_ok_flag = 0;
 /**
  * @Date: 2022-11-23 21:27:40
@@ -290,14 +291,24 @@ void HighlowAdjFunc(uint8_t key_value)
 			{	
 				//clear_screen(); 
 				
-				MenuManager.cur_menu = MenuManager.cur_menu->parent;
-				MenuManager.menu_status = 1;
-				goto_flag = 1;
+				MenuManager.cur_menu->view_type = SAVE_OR_NO;	/*进行修改确认界面*/
+				Ready_to_Exit_flag = 1;							/*进入准备退出状态*/
 				break;
 			}
 			default:   //界面刷新
 			{
-
+				if(Ready_to_Exit_flag == 1)						/*修改确认界面运行完成后会回到住功能函数界面*/
+				{
+					if(MenuManager.menu_status == SAVE_DATA)	/*确认是否要修改数据*/
+					{
+						/*开始将数据保存*/
+						HAL_UART_Transmit(&huart1,"save\r\n",12,1000);
+					}
+					MenuManager.cur_menu = MenuManager.cur_menu->parent;
+					goto_flag = 1;
+					MenuManager.menu_status = FIRST_ENTRY;
+					Ready_to_Exit_flag = 0;
+				}
 				break;
 			}
 		}
@@ -338,6 +349,11 @@ void HighlowAdjFunc(uint8_t key_value)
 			}
 			MenuManager.menu_status = 0;
 		}
+		else if((key_value != 0) || (MenuManager.menu_status == SAVE_DATA))
+		{
+
+		}
+		//HAL_UART_Transmit(&huart1,"High\r\n",6,1000);
 }
 
 /**
