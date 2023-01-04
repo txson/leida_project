@@ -1,6 +1,6 @@
 /*
  * @Date: 2022-11-16 22:46:21
- * @LastEditTime: 2022-11-23 21:33:03
+ * @LastEditTime: 2023-01-04 21:56:23
  * @LastEditors: herod
  * @Description: 基本设置界面源文件
  * @FilePath: \MDK-ARM\user\LCD\BasicSetMenu.c
@@ -215,20 +215,6 @@ void HighlowAdjFunc(uint8_t key_value)
 		{
 			case OK_KEY://按键A（确认按键）
 			{
-				//clear_screen(); 
-//				if( MenuManager.cur_menu->subMenus[MenuManager.cur_menu->selected] != NULL)
-//				{
-//					MenuManager.cur_menu = MenuManager.cur_menu->subMenus[MenuManager.cur_menu->selected];
-//				}
-//				if(MenuManager.DataSelectionStatus == 0)
-//				{
-//					MenuManager.DataSelectionStatus = 1;
-//				}
-//				else if (MenuManager.DataSelectionStatus == 1)
-//				{
-//					sscanf((char*)HighlowAdjustmentBuf,"%.2lf",HighlowAdjustment);
-//					MenuManager.DataSelectionStatus = 0;
-//				}
 				if(set_ok_flag == 0)
 				{
 					set_ok_flag = 1;			//选中状态
@@ -237,35 +223,24 @@ void HighlowAdjFunc(uint8_t key_value)
 				{
 					set_ok_flag = 0;			//未选中状态
 				}
-
 				break;
 			}
 			case DOWN_KEY://按键B（上一行菜单）
 			{
-
-//				if('0'> ((F_VAL *)(MenuManager.cur_menu->item_val)) ->char_val[0]||\
-//					((F_VAL *)(MenuManager.cur_menu->item_val)) ->char_val[0] >= '9')	//判断当前数据是否合法
-//				{
-//					break;
-//				}
-				//clear_screen(); 
 				if(set_ok_flag == 0)
 				{
-					/*下一项*/
-					//if(MenuManager.cur_menu->selected >= 0 && MenuManager.cur_menu->selected < (2 * 7 -1))
+					if(MenuManager.cur_menu->selected >=  (2 * 7 -1))
 					{
-						if(MenuManager.cur_menu->selected >=  (2 * 7 -1))
-						{
-							MenuManager.cur_menu->selected = 0;
-						}
-						else
-						{
-							MenuManager.cur_menu->selected++;
-						}
-						if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7 ].char_val[MenuManager.cur_menu->selected % 7] == '.')
-							MenuManager.cur_menu->selected++;
+						MenuManager.cur_menu->selected = 0;
 					}
-
+					else
+					{
+						MenuManager.cur_menu->selected++;
+					}
+					if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7 ].char_val[MenuManager.cur_menu->selected % 7] == '.')
+					{
+						MenuManager.cur_menu->selected++;
+					}
 				}
 				else if (set_ok_flag == 1)
 				{
@@ -303,6 +278,11 @@ void HighlowAdjFunc(uint8_t key_value)
 					{
 						/*开始将数据保存*/
 						HAL_UART_Transmit(&huart1,"save\r\n",12,1000);
+						/*此时需要将数据发送出去并修改全局变量*/
+						((F_VAL *)(MenuManager.cur_menu->item_val))[0].float_val = atof(((F_VAL *)(MenuManager.cur_menu->item_val))[0].char_val);
+						((F_VAL *)(MenuManager.cur_menu->item_val))[1].float_val = atof(((F_VAL *)(MenuManager.cur_menu->item_val))[1].char_val);			
+						HAL_UART_Transmit(&huart1,(char *)(&((F_VAL *)(MenuManager.cur_menu->item_val))[0].float_val),16,1000);
+						HAL_UART_Transmit(&huart1,(char *)(&((F_VAL *)(MenuManager.cur_menu->item_val))[1].float_val),16,1000);
 					}
 					MenuManager.cur_menu = MenuManager.cur_menu->parent;
 					goto_flag = 1;

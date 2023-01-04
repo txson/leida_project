@@ -861,9 +861,23 @@ void main_page_init(void)
  * @param {int} len
  * @Description: 显示传感器的值
  */
-void update_sensor_val(char* buf,int len)
+extern F_VAL HighlowAdjetMenu_Val[2];
+void update_sensor_val(char* data,int len)
 {
 	volatile uint8_t tmp_i = 0;
+	float sensor_float_val = 0.0;
+	char buf[16] = {0};
+	memset(buf,0,16);
+	sensor_float_val = atof(data);
+	if(sensor_float_val > HighlowAdjetMenu_Val[1].float_val)
+	{
+		sensor_float_val =  sensor_float_val - HighlowAdjetMenu_Val[1].float_val;
+	}
+	else
+	{
+		sensor_float_val = 0;
+	}
+	sprintf(buf, "%2.3f", sensor_float_val);
 	/*显示字符*/
 	for(tmp_i = 0 ; tmp_i < 7 ; tmp_i++)
 	{
