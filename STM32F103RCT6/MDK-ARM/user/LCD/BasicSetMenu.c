@@ -7,11 +7,12 @@
  * XXXX
  */
 #include "BasicSetMenu.h"
+#include "uart.h"
 #include <string.h>
 float HighlowAdjustment = 0.01;
 uint8_t HighlowAdjustmentBuf[7] = {0};
 extern Menu BasicSetMenu;
-
+extern uint8_t uart_send_buf[SEND_DATA_MAX_LEN];
 //Menu HighlowAdjustmentBit0 = {		//百位
 //	&HighlowAdjustmentBuf[0],
 //	0,0,0,0,1,
@@ -210,130 +211,149 @@ uint8_t set_ok_flag = 0;
  */
 void HighlowAdjFunc(uint8_t key_value)
 {
+	
 	uint8_t goto_flag = 0;
-		switch(key_value)
+	uint16_t pack_len = 0;
+	
+	switch(key_value)
+	{
+		case OK_KEY://按键A（确认按键）
 		{
-			case OK_KEY://按键A（确认按键）
+			if(set_ok_flag == 0)
 			{
-				if(set_ok_flag == 0)
+				set_ok_flag = 1;			//选中状态
+			}
+			else
+			{
+				set_ok_flag = 0;			//未选中状态
+			}
+			break;
+		}
+		case DOWN_KEY://按键B（上一行菜单）
+		{
+			if(set_ok_flag == 0)
+			{
+				if(MenuManager.cur_menu->selected >=  (2 * 7 -1))
 				{
-					set_ok_flag = 1;			//选中状态
+					MenuManager.cur_menu->selected = 0;
 				}
 				else
 				{
-					set_ok_flag = 0;			//未选中状态
+					MenuManager.cur_menu->selected++;
 				}
-				break;
+				if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7 ].char_val[MenuManager.cur_menu->selected % 7] == '.')
+				{
+					MenuManager.cur_menu->selected++;
+				}
 			}
-			case DOWN_KEY://按键B（上一行菜单）
+			else if (set_ok_flag == 1)
 			{
-				if(set_ok_flag == 0)
+				((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7]++;
+				if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] < '0')
 				{
-					if(MenuManager.cur_menu->selected >=  (2 * 7 -1))
-					{
-						MenuManager.cur_menu->selected = 0;
-					}
-					else
-					{
-						MenuManager.cur_menu->selected++;
-					}
-					if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7 ].char_val[MenuManager.cur_menu->selected % 7] == '.')
-					{
-						MenuManager.cur_menu->selected++;
-					}
+					((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] ='9';
 				}
-				else if (set_ok_flag == 1)
+				else if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] > '9' )
 				{
-					((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7]++;
-					if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] < '0')
-					{
-						((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] ='9';
-					}
-					else if(((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] > '9' )
-					{
-						 ((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] ='0';
-					}
-				}
-				
-				break;
-			}
-			case UP_KEY://按键C（下一行菜单 ）
-			{
-				/*暂时不做上翻功能*/
-				break;
-			}	
-			case BACK_KEY://按键D（返回）
-			{	
-				//clear_screen(); 
-				
-				MenuManager.cur_menu->view_type = SAVE_OR_NO;	/*进行修改确认界面*/
-				Ready_to_Exit_flag = 1;							/*进入准备退出状态*/
-				break;
-			}
-			default:   //界面刷新
-			{
-				if(Ready_to_Exit_flag == 1)						/*修改确认界面运行完成后会回到住功能函数界面*/
-				{
-					if(MenuManager.menu_status == SAVE_DATA)	/*确认是否要修改数据*/
-					{
-						/*开始将数据保存*/
-						HAL_UART_Transmit(&huart1,"save\r\n",12,1000);
-						/*此时需要将数据发送出去并修改全局变量*/
-						((F_VAL *)(MenuManager.cur_menu->item_val))[0].float_val = atof(((F_VAL *)(MenuManager.cur_menu->item_val))[0].char_val);
-						((F_VAL *)(MenuManager.cur_menu->item_val))[1].float_val = atof(((F_VAL *)(MenuManager.cur_menu->item_val))[1].char_val);			
-						HAL_UART_Transmit(&huart1,(char *)(&((F_VAL *)(MenuManager.cur_menu->item_val))[0].float_val),16,1000);
-						HAL_UART_Transmit(&huart1,(char *)(&((F_VAL *)(MenuManager.cur_menu->item_val))[1].float_val),16,1000);
-					}
-					MenuManager.cur_menu = MenuManager.cur_menu->parent;
-					goto_flag = 1;
-					MenuManager.menu_status = FIRST_ENTRY;
-					Ready_to_Exit_flag = 0;
-				}
-				break;
-			}
-		}
-		if(goto_flag == 1)
-		{
-			goto_flag = 0;
-			return;
-		}
-		else if((key_value != 0) || (MenuManager.menu_status == 1))
-		{
-			volatile uint8_t tmp_i = 0;
-			clear_screen();
-			display_GB2312_string(1,16,((F_VAL *)(MenuManager.cur_menu->item_val))[0].val_name,0,0); 
-			for(tmp_i  ; tmp_i < 7 * 1 ; tmp_i ++)
-			{
-
-				if(MenuManager.cur_menu->selected == tmp_i)
-				{
-					display_Signle_GB2312_string(3,16+(8 * tmp_i),&((F_VAL *)(MenuManager.cur_menu->item_val))[0].char_val[tmp_i],set_ok_flag,1);
-				}
-				else
-				{
-					display_Signle_GB2312_string(3,16+(8 * tmp_i),&((F_VAL *)(MenuManager.cur_menu->item_val))[0].char_val[tmp_i],0,0);
+					 ((F_VAL *)(MenuManager.cur_menu->item_val))[MenuManager.cur_menu->selected / 7].char_val[MenuManager.cur_menu->selected % 7] ='0';
 				}
 			}
 			
-			display_GB2312_string(5,16,((F_VAL *)(MenuManager.cur_menu->item_val))[1].val_name,0,0); 
-			for(tmp_i  ; tmp_i < 7 * 2 ; tmp_i ++)
-			{
-				if(MenuManager.cur_menu->selected == tmp_i)
-				{
-					display_Signle_GB2312_string(7,16+(8 * (tmp_i - 7)),&((F_VAL *)(MenuManager.cur_menu->item_val))[1].char_val[tmp_i - 7],set_ok_flag,1);
-				}
-				else
-				{
-					display_Signle_GB2312_string(7,16+(8 * (tmp_i - 7)),&((F_VAL *)(MenuManager.cur_menu->item_val))[1].char_val[tmp_i - 7],0,0);
-				}
-			}
-			MenuManager.menu_status = 0;
+			break;
 		}
-		else if((key_value != 0) || (MenuManager.menu_status == SAVE_DATA))
+		case UP_KEY://按键C（下一行菜单 ）
+		{
+			/*暂时不做上翻功能*/
+			break;
+		}	
+		case BACK_KEY://按键D（返回）
+		{	
+			//clear_screen(); 
+			
+			MenuManager.cur_menu->view_type = SAVE_OR_NO;	/*进行修改确认界面*/
+			Ready_to_Exit_flag = 1;							/*进入准备退出状态*/
+			break;
+		}
+		default:   //界面刷新
+		{
+			if(Ready_to_Exit_flag == 1)						/*修改确认界面运行完成后会回到住功能函数界面*/
+			{
+				if(MenuManager.menu_status == SAVE_DATA)	/*确认是否要修改数据*/
+				{
+					/*开始将数据保存*/
+					debug_print("save\r\n",12);
+					/*此时需要将数据发送出去并修改全局变量*/
+					((F_VAL *)(MenuManager.cur_menu->item_val))[0].float_val = atof(((F_VAL *)(MenuManager.cur_menu->item_val))[0].char_val);
+					((F_VAL *)(MenuManager.cur_menu->item_val))[1].float_val = atof(((F_VAL *)(MenuManager.cur_menu->item_val))[1].char_val);
+					
+				
+					pack_len = Packaging((char *)(&((F_VAL *)(MenuManager.cur_menu->item_val))[0].float_val),4,SET_LOW_TYPE);
+					if(pack_len == 0)
+					{
+						debug_print("Highlow arg set err1");
+						return;
+					}
+					HAL_UART_Transmit(&huart1,uart_send_buf,pack_len,1000);
+					debug_print("\r\n",2);
+					pack_len = Packaging((char *)(&((F_VAL *)(MenuManager.cur_menu->item_val))[1].float_val),4,SET_HIGHT_TYPE);
+					if(pack_len == 0)
+					{
+						debug_print("Highlow arg set err2");
+						return;
+					}
+					HAL_UART_Transmit(&huart1,uart_send_buf,pack_len,1000);
+					debug_print("\r\n",2);
+				}
+				MenuManager.cur_menu = MenuManager.cur_menu->parent;
+				goto_flag = 1;
+				MenuManager.menu_status = FIRST_ENTRY;
+				Ready_to_Exit_flag = 0;
+			}
+			break;
+		}
+	}
+	if(goto_flag == 1)
+	{
+		goto_flag = 0;
+		return;
+	}
+	else if((key_value != 0) || (MenuManager.menu_status == 1))
+	{
+		volatile uint8_t tmp_i = 0;
+		clear_screen();
+		display_GB2312_string(1,16,((F_VAL *)(MenuManager.cur_menu->item_val))[0].val_name,0,0); 
+		for(tmp_i  ; tmp_i < 7 * 1 ; tmp_i ++)
 		{
 
+			if(MenuManager.cur_menu->selected == tmp_i)
+			{
+				display_Signle_GB2312_string(3,16+(8 * tmp_i),&((F_VAL *)(MenuManager.cur_menu->item_val))[0].char_val[tmp_i],set_ok_flag,1);
+			}
+			else
+			{
+				display_Signle_GB2312_string(3,16+(8 * tmp_i),&((F_VAL *)(MenuManager.cur_menu->item_val))[0].char_val[tmp_i],0,0);
+			}
 		}
-		//HAL_UART_Transmit(&huart1,"High\r\n",6,1000);
+		
+		display_GB2312_string(5,16,((F_VAL *)(MenuManager.cur_menu->item_val))[1].val_name,0,0); 
+		for(tmp_i  ; tmp_i < 7 * 2 ; tmp_i ++)
+		{
+			if(MenuManager.cur_menu->selected == tmp_i)
+			{
+				display_Signle_GB2312_string(7,16+(8 * (tmp_i - 7)),&((F_VAL *)(MenuManager.cur_menu->item_val))[1].char_val[tmp_i - 7],set_ok_flag,1);
+			}
+			else
+			{
+				display_Signle_GB2312_string(7,16+(8 * (tmp_i - 7)),&((F_VAL *)(MenuManager.cur_menu->item_val))[1].char_val[tmp_i - 7],0,0);
+			}
+		}
+		MenuManager.menu_status = 0;
+	}
+	else if((key_value != 0) || (MenuManager.menu_status == SAVE_DATA))
+	{
+
+	}
+	//HAL_UART_Transmit(&huart1,"High\r\n",6,1000);
 }
 
 /**

@@ -3,7 +3,10 @@
 #include "stm32f1xx_hal.h"
 #include "main.h"
 #include "MainMenu.h"
+#include "view_mgr.h"
 #include "crc.h"
+#include "uart.h"
+
 extern uint32_t cnt_start;
 extern UART_HandleTypeDef huart1;
 extern uint8_t time_out_cnt;
@@ -51,7 +54,61 @@ extern char boxin_Adb[8];
 uint16_t g_data_max = 0;
 volatile float g_new_dis = 0;
 volatile int g_max_db = 128;
+uint8_t uart_send_buf[SEND_DATA_MAX_LEN] = {0};
 
+/**
+ * @Date: 2022-11-24 10:53:09
+ * @LastEditors: herod
+ * @Description: 发送组包函数
+ */
+uint16_t Packaging(uint8_t *data,uint16_t size,uint8_t type)
+{
+	uint16_t pack_len = 0;
+	if((data == NULL) || (size > SEND_DATA_MAX_LEN))
+	{
+		return 0;
+	}
+	memset(uart_send_buf,0,SEND_DATA_MAX_LEN);
+	/*组帧头*/
+	memset(uart_send_buf,FRAME_HEADER,FRAME_HEADER_LEN);
+	pack_len = FRAME_HEADER_LEN;
+	/*组帧类型*/
+	uart_send_buf[pack_len] = type;
+	pack_len = pack_len + 2;
+	/*组数据长度*/
+	memcpy(uart_send_buf + pack_len,&size,2);
+	pack_len = pack_len + 2;
+	/*添加数据*/
+	memcpy(uart_send_buf + pack_len ,data,size);
+	pack_len = pack_len + size;
+	/*添加帧尾部2字节对齐*/
+	if(size/2 == 0)
+	{
+		memset(uart_send_buf + pack_len,FRAME_TAIL,FRAME_TAIL_LEN);
+		pack_len = pack_len + 2;
+	}
+	else
+	{
+		pack_len = pack_len + 1;
+		memset(uart_send_buf + pack_len,FRAME_TAIL,FRAME_TAIL_LEN);
+		pack_len = pack_len + 2;
+	}
+	return pack_len;
+}
+
+
+
+/**
+ * @Date: 2022-11-24 10:53:09
+ * @LastEditors: herod
+ * @Description: 调试函数
+ */
+void debug_print(uint8_t *pData, uint16_t Size)
+{
+#ifdef GEBUG
+	HAL_UART_Transmit(&huart1,pData,Size,1000);	
+#endif
+}
 
 /**
  * @Date: 2022-11-24 10:53:09
@@ -93,7 +150,7 @@ int uart_process_data(void)
                             cnt_start = HAL_GetTick();
                             time_out_cnt = 0;
                             display_GB2312_string(7,58,"Sensor OK",0,0);
-                            HAL_UART_Transmit(&huart1,"loop star1",11,1000);	
+                            debug_print("loop star1",11);	
 						}
 				}
 				break;
@@ -119,7 +176,7 @@ int uart_process_data(void)
 					{
 						show_boxin_page((char*)test_buf , data_len);
 					}
-					HAL_UART_Transmit(&huart1,"loop star2",11,1000); 
+					debug_print("loop star2",11); 
 				}
 				break;
 			}
@@ -132,11 +189,11 @@ int uart_process_data(void)
 						memset(boxin_dm,0,8);
 						memcpy(boxin_dm,&out_data[4],out_data[2]);
 						show_boxin_page(test_buf,sizeof(test_buf));
-						HAL_UART_Transmit(&huart1,"loop star2",11,1000); 
+						debug_print("loop star2",11); 
 					}
 				}
 				break;
-				HAL_UART_Transmit(&huart1,"loop star3",11,1000); 
+				debug_print("loop star3",11); 
 				break;
 			}
 			case 0x04:{
@@ -148,11 +205,11 @@ int uart_process_data(void)
 						memset(boxin_Adb,0,8);
 						memcpy(boxin_Adb,&out_data[3],out_data[2]);
 						show_boxin_page(test_buf,sizeof(test_buf));
-						HAL_UART_Transmit(&huart1,"loop star2",11,1000); 
+						debug_print("loop star2",11); 
 					}
 				}
 				break;
-				HAL_UART_Transmit(&huart1,"loop star3",11,1000); 
+				debug_print("loop star3",11); 
 				break;
 			}
 		}

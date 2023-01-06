@@ -18,6 +18,23 @@
 
 #define MENUS_MAX_NUM 17
 
+/*帧头*/
+#define FRAME_HEADER 0x68
+#define FRAME_HEADER_LEN 2
+
+/*帧尾*/
+#define FRAME_TAIL 0X16
+#define FRAME_TAIL_LEN 2
+
+
+enum
+{
+	SET_HIGHT_TYPE = 0x01,
+	SET_LOW_TYPE = 0x02,
+	MAX_TYPE,
+};
+
+
 enum
 {
 	FUC,			/*功能函数显示*/
