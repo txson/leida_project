@@ -1029,7 +1029,7 @@ void show_main_page(char* data,int len)
 	update_sensor_val(data, len);		/*显示数值.*/
 	
 	/*更新进度显示*/
-	update_sensor_progress(current_sr_val,current_len);
+	update_sensor_progress(data,len);
 	
 }
 
