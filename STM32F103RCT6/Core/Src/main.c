@@ -49,6 +49,7 @@
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 UART_HandleTypeDef huart1;
+UART_HandleTypeDef huart4;
 DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
 
@@ -62,6 +63,7 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_UART4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -112,12 +114,13 @@ int main(void)
   MX_USART1_UART_Init();
   
 	__HAL_UART_ENABLE_IT(&huart1, UART_IT_IDLE);
-  
+	MX_UART4_Init();
+	printf("test\r\n");
 	HAL_UART_Transmit(&huart1,"hello word\r\n",12,1000);	
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
 	Key_Init();
-	 uart_init();   /*消息队列初始化*/
+	uart_init();   /*消息队列初始化*/
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
@@ -248,6 +251,39 @@ static void MX_ADC1_Init(void)
 }
 
 /**
+  * @brief UART4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART4_Init(void)
+{
+
+  /* USER CODE BEGIN UART4_Init 0 */
+
+  /* USER CODE END UART4_Init 0 */
+
+  /* USER CODE BEGIN UART4_Init 1 */
+
+  /* USER CODE END UART4_Init 1 */
+  huart4.Instance = UART4;
+  huart4.Init.BaudRate = 115200;
+  huart4.Init.WordLength = UART_WORDLENGTH_8B;
+  huart4.Init.StopBits = UART_STOPBITS_1;
+  huart4.Init.Parity = UART_PARITY_NONE;
+  huart4.Init.Mode = UART_MODE_TX_RX;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART4_Init 2 */
+
+  /* USER CODE END UART4_Init 2 */
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -347,6 +383,12 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+/* USER CODE BEGIN 4 */
+int fputc(int ch, FILE *f)
+{
+    HAL_UART_Transmit(&huart4, (uint8_t *)&ch, 1, 2);//huart1需要根据你的配置修改
+    return ch;    
+}
 
 /* USER CODE END 4 */
 

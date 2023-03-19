@@ -75,6 +75,10 @@ uint8_t KEY_Scan(uint8_t mode)   /*����ɨ��*/
 	else
 	{
 		tmp_key_val = key_val;	/*�ȴ�����ȫ���ſ�,�������һ���ſ��İ���*/
+		if(tmp_key_val != 0)
+		{
+			printf("key up key val = %d\r\n",key_val);
+		}
 		key_val = 0;
 	}
 	return tmp_key_val;
